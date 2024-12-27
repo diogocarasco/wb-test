@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\DB;
 class AffiliateService
 {
     public function __construct(
-        protected ApiService $apiService
+        protected ApiService $apiService,
+        protected UserService $userService
     ) {}
 
     /**
@@ -38,17 +39,26 @@ class AffiliateService
                 throw new AffiliateCreateException('Email already in use');
             }
 
+            /*
             $user = User::create([
                 'email' => $email,
                 'name' => $name,
                 'type' => User::TYPE_AFFILIATE,
             ]);
+            */
+
+            $user_data = [
+                'email' => $email,
+                'name' => $name,
+                'type' => User::TYPE_AFFILIATE,
+            ];
+            $user =  $this->userService->register($user_data);
         
             $discountCode = $this->apiService->createDiscountCode($merchant)['code'];
 
             $affiliate = Affiliate::create([
                 'merchant_id' => $merchant->id,
-                'user_id' => $user->id,
+                'user_id' => $merchant->user_id,
                 'commission_rate' => $commissionRate,
                 'discount_code' => $discountCode,
             ]);

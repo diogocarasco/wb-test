@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Log;
 
 class MerchantService
 {
+
+    public function __construct(
+        protected UserService $userService
+    ) {}
     /**
      * Register a new user and associated merchant.
      * Hint: Use the password field to store the API key.
@@ -26,13 +30,13 @@ class MerchantService
 
         DB::beginTransaction();
         try {
-            $user = User::create([
-                'name' => $data['name'],
+            $user_data = [
                 'email' => $data['email'],
+                'name' => $data['name'],
                 'password' => $data['api_key'],
-                'type' => User::TYPE_MERCHANT, 
-            ]);
-            Log::info('User created', ['user_id' => $user->id]);
+                'type' => User::TYPE_MERCHANT,
+            ];
+            $user =  $this->userService->register($user_data);
     
             $merchant =[
                 'user_id' => $user->id,

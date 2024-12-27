@@ -8,6 +8,7 @@ use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class MerchantService
 {
@@ -22,22 +23,29 @@ class MerchantService
     public function register(array $data): Merchant
     {
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['api_key'],
-            'type' => User::TYPE_MERCHANT, 
-        ]);
+        DB::beginTransaction();
+        try {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['api_key'],
+                'type' => User::TYPE_MERCHANT, 
+            ]);
+    
+            $merchant =[
+                'user_id' => $user->id,
+                'display_name' => $data['name'],
+                'domain' => $data['domain'],
+            ];
+    
+            $result = $user->merchant()->create($merchant);
+    
+            DB::commit();
+            return $result;
+        } catch (\Throwable $th) {
+            DB::rollBack();
+        }
 
-        $merchant =[
-            'user_id' => $user->id,
-            'display_name' => $data['name'],
-            'domain' => $data['domain'],
-        ];
-
-        $result = $user->merchant()->create($merchant);
-
-        return $result;
     }
 
     /**

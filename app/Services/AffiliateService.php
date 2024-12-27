@@ -39,14 +39,6 @@ class AffiliateService
                 throw new AffiliateCreateException('Email already in use');
             }
 
-            /*
-            $user = User::create([
-                'email' => $email,
-                'name' => $name,
-                'type' => User::TYPE_AFFILIATE,
-            ]);
-            */
-
             $user_data = [
                 'email' => $email,
                 'name' => $name,

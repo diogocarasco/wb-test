@@ -42,7 +42,6 @@ class MerchantController extends Controller
         
                 return new JsonResponse($stats);
         } catch (\Exception $e) { 
-            echo $e->getMessage();
             Log::error("An error occurred when fetching order stats:". $e->getMessage());
         }    
     }

@@ -38,7 +38,6 @@ class PayoutOrderJob implements ShouldQueue
         DB::beginTransaction();
         
         try {
-            echo "###########".$this->order;
             $this->order->payout_status = Order::STATUS_PAID;
             $this->order->save();
   

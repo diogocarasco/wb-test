@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreignId('affiliate_id')->nullable()->constrained();
             // Replacing with decimal data types to increase precision and avoid rounding errors
             $table->decimal('subtotal', 10, 2);
-            $table->decimal('commission_owed', 5, 2)->default(0.00);
+            $table->decimal('commission_owed', 5, 2);
             $table->string('payout_status')->default(Order::STATUS_UNPAID);
             $table->string('discount_code')->nullable();
             $table->timestamps();

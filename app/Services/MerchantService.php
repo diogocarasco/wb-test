@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class MerchantService
 {
@@ -31,6 +32,7 @@ class MerchantService
                 'password' => $data['api_key'],
                 'type' => User::TYPE_MERCHANT, 
             ]);
+            Log::info('User created', ['user_id' => $user->id]);
     
             $merchant =[
                 'user_id' => $user->id,
@@ -41,8 +43,10 @@ class MerchantService
             $result = $user->merchant()->create($merchant);
     
             DB::commit();
+            Log::info('Merchant created', ['merchant_id' => $result->id]);
             return $result;
         } catch (\Throwable $th) {
+            Log::error('Merchant creation failed', ['error' => $th->getMessage()]);
             DB::rollBack();
         }
 
@@ -56,10 +60,15 @@ class MerchantService
      */
     public function updateMerchant(User $user, array $data)
     {
-        Merchant::where('id', $user->id)->update([
-            'display_name' => $data['name'],
-            'domain' => $data['domain'],
-        ]);
+        try {
+            Merchant::where('id', $user->id)->update([
+                'display_name' => $data['name'],
+                'domain' => $data['domain'],
+            ]);
+        } catch (\Throwable $th) {
+            Log::error('Merchant update failed', ['error' => $th->getMessage()]);
+        }
+
     }
 
     /**

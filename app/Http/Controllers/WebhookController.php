@@ -6,6 +6,8 @@ use App\Services\AffiliateService;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class WebhookController extends Controller
 {
@@ -22,7 +24,11 @@ class WebhookController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $data = $request->all();
-        try {
+        if (!$this->validateRequestData($data)) {
+            return response()->json(['error' => 'Invalid data'], 400);
+        }
+
+        try { 
             $this->orderService->processOrder($data);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
@@ -30,4 +36,20 @@ class WebhookController extends Controller
         }           
         return response()->json(['message' => 'Order processed']);
     }
+
+    public function validateRequestData(array $data) :bool{
+
+        $validator = Validator::make($data, [
+            'order_id' => 'required|string',
+            'subtotal_price' => 'required|numeric',
+            'merchant_domain' => 'required|string',
+            'discount_code' => 'required|string',
+        ]);
+        
+        if ($validator->fails()) {
+            return false;
+        }
+        return true;
+    }
+
 }

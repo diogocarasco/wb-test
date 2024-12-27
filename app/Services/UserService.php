@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\AffiliateCreateException;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 
 class UserService

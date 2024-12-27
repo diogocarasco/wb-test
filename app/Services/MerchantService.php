@@ -7,6 +7,7 @@ use App\Models\Affiliate;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\User;
+use Carbon\Carbon;
 
 class MerchantService
 {
@@ -20,7 +21,23 @@ class MerchantService
      */
     public function register(array $data): Merchant
     {
-        // TODO: Complete this method
+
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['api_key'],
+            'type' => User::TYPE_MERCHANT, 
+        ]);
+
+        $merchant =[
+            'user_id' => $user->id,
+            'display_name' => $data['name'],
+            'domain' => $data['domain'],
+        ];
+
+        $result = $user->merchant()->create($merchant);
+
+        return $result;
     }
 
     /**
@@ -31,7 +48,10 @@ class MerchantService
      */
     public function updateMerchant(User $user, array $data)
     {
-        // TODO: Complete this method
+        Merchant::where('id', $user->id)->update([
+            'display_name' => $data['name'],
+            'domain' => $data['domain'],
+        ]);
     }
 
     /**
@@ -43,7 +63,12 @@ class MerchantService
      */
     public function findMerchantByEmail(string $email): ?Merchant
     {
-        // TODO: Complete this method
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            return null;
+        }
+
+        return $user->merchant;
     }
 
     /**
@@ -55,6 +80,38 @@ class MerchantService
      */
     public function payout(Affiliate $affiliate)
     {
-        // TODO: Complete this method
+        $orders = Order::where('affiliate_id', $affiliate->id)
+                    ->where('payout_status', Order::STATUS_UNPAID)  
+                    ->get();
+
+        foreach ($orders as $order) {
+            PayoutOrderJob::dispatch($order);
+        }
+    }
+
+    /**
+     * Get useful order statistics for the merchant API.
+     *
+     * @param Carbon $from
+     * @param Carbon $to
+     * @return array{count: int, commission_owed: float, revenue: float}
+     */
+    public function getOrdersStatus(Carbon $from, Carbon $to): array{
+        $stats = Order::whereBetween('created_at', [$from, $to])
+            ->selectRaw('COUNT(*) as count')
+            ->selectRaw('SUM(CASE WHEN status = ? THEN affiliate_commission ELSE 0 END) as commission_owed', [Order::STATUS_UNPAID])
+            ->selectRaw('SUM(subtotal) as revenue')
+            ->first()
+            ->toArray();
+
+        if (!$stats) {
+            return [
+                'count' => 0,
+                'commission_owed' => 0,
+                'revenue' => 0
+            ];
+        }
+
+        return $stats;
     }
 }
